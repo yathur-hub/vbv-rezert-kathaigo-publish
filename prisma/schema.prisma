@@ -4,8 +4,8 @@ generator client {
 }
 
 datasource db {
-  provider = "postgresql"
-  url      = env("DATABASE_URL")
+  provider = "sqlite"
+  url      = "file:./dev.db"
 }
 
 enum Role {
@@ -45,7 +45,7 @@ model Company {
   seats                 Int       @default(0)
   compliance_status     String    @default("PENDING")
   renewal_dates         DateTime?
-  reporting_preferences Json?
+  reporting_preferences String?
 
   users           User[]
   compliance_logs ComplianceLog[]
@@ -117,7 +117,7 @@ model Question {
   image_url            String?
 
   exam_series_id     String?
-  answer_options_raw Json?
+  answer_options_raw String?
   skill_track        String?
   module_mapping     String?
   content_priority   Int?    @default(2)
@@ -141,7 +141,7 @@ model ExamSeries {
   exam_type           String
   total_questions     Int      @default(0)
   total_points        Int      @default(0)
-  domain_distribution Json?
+  domain_distribution String?
   created_at          DateTime @default(now())
 
   questions Question[]
