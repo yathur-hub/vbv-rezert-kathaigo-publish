@@ -7,45 +7,60 @@ import { db } from '@/lib/db';
 export const dynamic = 'force-dynamic';
 
 export default async function Home() {
-  const tracksWithProgress = await db.learningTrack.findMany({
-    where: {
-      user_progress: {
-        some: { user_id: 'mock-user-1', completion_status: 'IN_PROGRESS' }
-      }
-    },
-    include: {
-      modules: {
-        orderBy: { module_order: 'asc' }
+  let activeTracks: any[] = [];
+
+  try {
+    const tracksWithProgress = await db.learningTrack.findMany({
+      where: {
+        user_progress: {
+          some: { user_id: 'mock-user-1', completion_status: 'IN_PROGRESS' }
+        }
       },
-      user_progress: {
-        where: { user_id: 'mock-user-1' }
+      include: {
+        modules: {
+          orderBy: { module_order: 'asc' }
+        },
+        user_progress: {
+          where: { user_id: 'mock-user-1' }
+        }
       }
-    }
-  });
+    });
 
-  const activeTracks = tracksWithProgress.map(track => {
-    const totalModules = track.modules.length;
-    const startedModules = track.user_progress.filter(p => p.completion_status !== 'NOT_STARTED').length;
-    const progressPercent = totalModules > 0 ? Math.round((startedModules / totalModules) * 100) : 0;
-    
-    // Find next module: first one IN_PROGRESS, or just fallback
-    const inProgress = track.user_progress.find(p => p.completion_status === 'IN_PROGRESS');
-    const nextModuleObj = inProgress 
-      ? track.modules.find(m => m.module_id === inProgress.module_id)
-      : track.modules[0];
-    
-    const totalMastery = track.user_progress.reduce((sum, p) => sum + p.mastery_score, 0);
-    const avgMastery = startedModules > 0 ? Math.round(totalMastery / startedModules) : 0;
+    activeTracks = tracksWithProgress.map(track => {
+      const totalModules = track.modules.length;
+      const startedModules = track.user_progress.filter(p => p.completion_status !== 'NOT_STARTED').length;
+      const progressPercent = totalModules > 0 ? Math.round((startedModules / totalModules) * 100) : 0;
+      
+      const inProgress = track.user_progress.find(p => p.completion_status === 'IN_PROGRESS');
+      const nextModuleObj = inProgress 
+        ? track.modules.find(m => m.module_id === inProgress.module_id)
+        : track.modules[0];
+      
+      const totalMastery = track.user_progress.reduce((sum, p) => sum + p.mastery_score, 0);
+      const avgMastery = startedModules > 0 ? Math.round(totalMastery / startedModules) : 0;
 
-    return {
-      trackId: track.track_id,
-      title: track.title,
-      category: track.category,
-      progress: progressPercent,
-      masteryScore: avgMastery,
-      nextModule: nextModuleObj?.title || 'Weiterlernen'
-    };
-  });
+      return {
+        trackId: track.track_id,
+        title: track.title,
+        category: track.category,
+        progress: progressPercent,
+        masteryScore: avgMastery,
+        nextModule: nextModuleObj?.title || 'Weiterlernen'
+      };
+    });
+  } catch (error) {
+    console.warn("DB Connection failed, using mock data for dashboard", error);
+    activeTracks = [
+      {
+        trackId: 'mock-track-1',
+        title: 'Personenversicherungen Grundlagen',
+        category: 'Sachversicherung',
+        progress: 45,
+        masteryScore: 68,
+        nextModule: 'Unfallversicherung UVG'
+      }
+    ];
+  }
 
   return (
     <div style={{ display: 'flex', flexDirection: 'column', gap: '32px' }}>
