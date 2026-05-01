@@ -1,0 +1,326 @@
+generator client {
+  provider   = "prisma-client-js"
+  engineType = "library"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+enum Role {
+  LEARNER
+  COMPANY_ADMIN
+  ENTERPRISE_ADMIN
+  SUPER_ADMIN
+}
+
+model User {
+  user_id               String   @id @default(uuid())
+  email                 String   @unique
+  name                  String?
+  role                  Role     @default(LEARNER)
+  company_id            String?
+  certification_profile String?
+  progress_score        Int      @default(0)
+  readiness_score       Int      @default(0)
+  xp_total              Int      @default(0)
+  streak_days           Int      @default(0)
+  subscription_status   String   @default("INACTIVE")
+  created_at            DateTime @default(now())
+
+  company         Company?          @relation(fields: [company_id], references: [company_id])
+  progress        UserProgress[]
+  sessions        PracticeSession[]
+  attempts        Attempt[]
+  mock_exams      MockExam[]
+  compliance_logs ComplianceLog[]
+  reviewed_qs     Question[]        @relation("Reviewer")
+  validation_logs ValidationLog[]   @relation("ReviewerLogs")
+}
+
+model Company {
+  company_id            String    @id @default(uuid())
+  name                  String
+  seats                 Int       @default(0)
+  compliance_status     String    @default("PENDING")
+  renewal_dates         DateTime?
+  reporting_preferences Json?
+
+  users           User[]
+  compliance_logs ComplianceLog[]
+}
+
+enum ValidationStatus {
+  RAW_IMPORTED
+  CLEANED
+  ANSWER_STRIPPED
+  TAGGED
+  NEEDS_REVIEW
+  VALIDATED
+  RETIRED
+}
+
+enum DocumentType {
+  SCHRIFTLICH
+  MUENDLICH
+  ZUSATZFRAGE
+}
+
+model SourceDocument {
+  document_id String       @id @default(uuid())
+  filename    String
+  source_name String
+  year        Int?
+  session     String?
+  type        DocumentType @default(SCHRIFTLICH)
+  priority    Int          @default(1)
+  created_at  DateTime     @default(now())
+
+  repository_source String?
+  branch            String?
+  file_path         String?
+  import_status     String?   @default("PENDING")
+  source_version    String?
+  file_hash         String?
+  last_sync_date    DateTime?
+
+  questions Question[]
+}
+
+model Question {
+  question_id          String           @id @default(uuid())
+  document_id          String?
+  source_year          Int?
+  source_exam_session  String?
+  source_page          Int?
+  original_question_id String?
+  question_text        String
+  question_type        String
+  category_primary     String?
+  category_secondary   String?
+  insurance_domain     String?
+  legal_reference      String?
+  competency_level     String?
+  difficulty           String?
+  points               Int?
+  language             String?
+  ocr_confidence       Float?
+  ocr_quality_flag     Boolean          @default(true)
+  is_duplicate         Boolean          @default(false)
+  is_incomplete        Boolean          @default(false)
+  low_readability      Boolean          @default(false)
+  validation_status    ValidationStatus @default(RAW_IMPORTED)
+  reviewer_id          String?
+  created_at           DateTime         @default(now())
+  updated_at           DateTime         @updatedAt
+  image_url            String?
+
+  exam_series_id     String?
+  answer_options_raw Json?
+  skill_track        String?
+  module_mapping     String?
+  content_priority   Int?    @default(2)
+
+  source_doc  SourceDocument? @relation(fields: [document_id], references: [document_id])
+  reviewer    User?           @relation("Reviewer", fields: [reviewer_id], references: [user_id])
+  exam_series ExamSeries?     @relation(fields: [exam_series_id], references: [series_id])
+
+  answer_options      AnswerOption[]
+  question_tags       QuestionTag[]
+  validation_logs     ValidationLog[]
+  learning_relevances LearningRelevance[]
+  attempts            Attempt[]
+  module_exercises    ModuleExercise[]
+}
+
+model ExamSeries {
+  series_id           String   @id @default(uuid())
+  year                Int
+  session             String
+  exam_type           String
+  total_questions     Int      @default(0)
+  total_points        Int      @default(0)
+  domain_distribution Json?
+  created_at          DateTime @default(now())
+
+  questions Question[]
+}
+
+model AnswerOption {
+  answer_option_id      String  @id @default(uuid())
+  question_id           String
+  option_text           String
+  option_order          Int?
+  validation_status     String  @default("UNVALIDATED")
+  validated_correctness Boolean @default(false)
+  reviewer_notes        String?
+
+  question Question @relation(fields: [question_id], references: [question_id])
+}
+
+model LearningTrack {
+  track_id              String  @id @default(uuid())
+  title                 String
+  category              String
+  certification_profile String?
+  difficulty            String?
+  estimated_duration    Int? // in minutes
+  description           String?
+  readiness_weight      Int?
+  xp_reward             Int     @default(0)
+
+  modules       LearningModule[]
+  user_progress UserProgress[]
+}
+
+model LearningModule {
+  module_id    String  @id @default(uuid())
+  track_id     String
+  title        String
+  topic        String?
+  module_order Int     @default(0)
+  difficulty       String?
+  content_type     String?
+  chapter_count    Int     @default(0)
+  readiness_weight Int?
+  xp_reward        Int     @default(0)
+
+  track             LearningTrack     @relation(fields: [track_id], references: [track_id])
+  user_progress     UserProgress[]
+  practice_sessions PracticeSession[]
+  lessons           ModuleLesson[]
+  assessments       ModuleAssessment[]
+}
+
+model UserProgress {
+  progress_id       String    @id @default(uuid())
+  user_id           String
+  track_id          String
+  module_id         String
+  completion_status String    @default("NOT_STARTED") // NOT_STARTED, IN_PROGRESS, COMPLETED
+  mastery_score     Int       @default(0)
+  next_review_date  DateTime?
+
+  user   User           @relation(fields: [user_id], references: [user_id])
+  track  LearningTrack  @relation(fields: [track_id], references: [track_id])
+  module LearningModule @relation(fields: [module_id], references: [module_id])
+
+  @@unique([user_id, module_id])
+}
+
+model PracticeSession {
+  session_id   String   @id @default(uuid())
+  user_id      String
+  module_id    String
+  session_type String   @default("TRAINING") // TRAINING, INTENSIVE, ERROR_FOCUS, DAILY_CHALLENGE
+  score        Int      @default(0)
+  accuracy     Float    @default(0)
+  time_spent   Int      @default(0) // in seconds
+  created_at   DateTime @default(now())
+
+  user   User           @relation(fields: [user_id], references: [user_id])
+  module LearningModule @relation(fields: [module_id], references: [module_id])
+}
+
+model Attempt {
+  attempt_id  String  @id @default(uuid())
+  user_id     String
+  question_id String
+  answer      String
+  result      Boolean
+  confidence  String?
+  time_spent  Int? // in seconds
+
+  user     User     @relation(fields: [user_id], references: [user_id])
+  question Question @relation(fields: [question_id], references: [question_id])
+}
+
+model MockExam {
+  exam_id         String  @id @default(uuid())
+  template_id     String?
+  user_id         String
+  score           Int     @default(0)
+  readiness_level String?
+
+  user User @relation(fields: [user_id], references: [user_id])
+}
+
+model ComplianceLog {
+  log_id     String   @id @default(uuid())
+  company_id String?
+  user_id    String?
+  event_type String
+  timestamp  DateTime @default(now())
+
+  company Company? @relation(fields: [company_id], references: [company_id])
+  user    User?    @relation(fields: [user_id], references: [user_id])
+}
+
+model QuestionTag {
+  tag_id      String @id @default(uuid())
+  question_id String
+  tag_name    String
+
+  question Question @relation(fields: [question_id], references: [question_id])
+}
+
+model ValidationLog {
+  validation_id    String   @id @default(uuid())
+  question_id      String
+  reviewer_id      String?
+  validation_stage String
+  decision         String
+  rationale        String?
+  timestamp        DateTime @default(now())
+
+  question Question @relation(fields: [question_id], references: [question_id])
+  reviewer User?    @relation("ReviewerLogs", fields: [reviewer_id], references: [user_id])
+}
+
+model LearningRelevance {
+  mapping_id       String @id @default(uuid())
+  question_id      String
+  skill_track      String
+  learning_module  String
+  readiness_weight Int?
+
+  question Question @relation(fields: [question_id], references: [question_id])
+}
+
+model ModuleLesson {
+  lesson_id       String  @id @default(uuid())
+  module_id       String
+  title           String
+  lesson_type     String  @default("THEORY")
+  sequence_order  Int     @default(0)
+  content_body    String? // Expected Markdown or JSON for rendering
+  legal_reference String?
+  xp_reward       Int     @default(0)
+
+  module    LearningModule   @relation(fields: [module_id], references: [module_id])
+  exercises ModuleExercise[]
+}
+
+model ModuleExercise {
+  exercise_id         String  @id @default(uuid())
+  lesson_id           String
+  question_id         String
+  exercise_type       String  @default("MULTIPLE_CHOICE")
+  difficulty          String?
+  points              Int     @default(1)
+  repetition_priority Int     @default(1)
+
+  lesson   ModuleLesson @relation(fields: [lesson_id], references: [lesson_id])
+  question Question     @relation(fields: [question_id], references: [question_id])
+}
+
+model ModuleAssessment {
+  assessment_id         String  @id @default(uuid())
+  module_id             String
+  passing_score         Int     @default(70)
+  readiness_weight      Int?
+  certificate_relevance Boolean @default(false)
+
+  module LearningModule @relation(fields: [module_id], references: [module_id])
+}

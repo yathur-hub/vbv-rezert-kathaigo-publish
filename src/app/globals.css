@@ -1,34 +1,94 @@
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Roboto+Serif:ital,opsz,wght@0,8..144,300..800;1,8..144,300..800&display=swap');
+@import "tailwindcss";
+
 :root {
-  --background: #ffffff;
-  --foreground: #171717;
-}
+  /* Brand */
+  --color-primary-900: #1f3d63;
+  --color-primary-800: #274d78;
+  --color-primary-700: #2f5d8f;
+  --color-primary-600: #386aa1;
+  --color-primary-500: #4275b1;
+  --color-primary-400: #5f8dc1;
+  --color-primary-300: #7fa7d1;
+  --color-primary-200: #b8d0e8;
+  --color-primary-100: #dce8f5;
+  --color-primary-50: #f1f6fb;
 
-@media (prefers-color-scheme: dark) {
-  :root {
-    --background: #0a0a0a;
-    --foreground: #ededed;
-  }
-}
+  /* Neutrals */
+  --color-white: #ffffff;
+  --color-background: #f8fafc;
+  --color-surface: #ffffff;
+  --color-surface-muted: #f1f5f9;
+  --color-border: #cbd5e1;
+  --color-border-soft: #e2e8f0;
 
-html {
-  height: 100%;
-}
+  /* Text */
+  --color-text-primary: #0f172a;
+  --color-text-secondary: #334155;
+  --color-text-muted: #64748b;
+  --color-text-disabled: #94a3b8;
+  --color-text-inverse: #ffffff;
 
-html,
-body {
-  max-width: 100vw;
-  overflow-x: hidden;
-}
+  /* States */
+  --color-success: #16a34a;
+  --color-success-light: #dcfce7;
 
-body {
-  min-height: 100%;
-  display: flex;
-  flex-direction: column;
-  color: var(--foreground);
-  background: var(--background);
-  font-family: Arial, Helvetica, sans-serif;
-  -webkit-font-smoothing: antialiased;
-  -moz-osx-font-smoothing: grayscale;
+  --color-warning: #f59e0b;
+  --color-warning-light: #fef3c7;
+
+  --color-error: #dc2626;
+  --color-error-light: #fee2e2;
+
+  --color-info: #0ea5e9;
+  --color-info-light: #e0f2fe;
+
+  /* Layout */
+  --radius-sm: 6px;
+  --radius-md: 10px;
+  --radius-lg: 16px;
+  --radius-xl: 24px;
+
+  --shadow-sm: 0 1px 2px rgba(15, 23, 42, 0.06);
+  --shadow-md: 0 8px 24px rgba(15, 23, 42, 0.08);
+  --shadow-lg: 0 16px 40px rgba(15, 23, 42, 0.12);
+
+  /* Typography */
+  --font-family-sans: Inter, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+  --font-family-serif: "Roboto Serif", Georgia, Cambria, "Times New Roman", serif;
+
+  --font-size-xs: 12px;
+  --font-size-sm: 14px;
+  --font-size-base: 16px;
+  --font-size-lg: 18px;
+  --font-size-xl: 24px;
+  --font-size-2xl: 32px;
+  --font-size-3xl: 44px;
+
+  --line-height-tight: 1.15;
+  --line-height-base: 1.5;
+  --line-height-loose: 1.7;
+
+  /* Legacy Mapping (Keep for backward compatibility during transition) */
+  --color-primary-dark: var(--color-primary-900);
+  --color-primary-light: var(--color-primary-50);
+  --color-neutral-50: var(--color-background);
+  --color-neutral-100: var(--color-surface-muted);
+  --color-neutral-200: var(--color-border-soft);
+  --color-neutral-300: var(--color-border);
+  --color-text-dark: var(--color-text-primary);
+  --color-text-medium: var(--color-text-secondary);
+  --color-text-light: var(--color-text-muted);
+  --font-heading: var(--font-family-sans);
+  --font-body: var(--font-family-sans);
+  --border-radius-sm: var(--radius-sm);
+  --border-radius-md: var(--radius-md);
+  --border-radius-lg: var(--radius-lg);
+  --box-shadow-soft: var(--shadow-sm);
+  --box-shadow-medium: var(--shadow-md);
+  
+  /* Layout & Sizing (Retained) */
+  --sidebar-width: 280px;
+  --header-height: 72px;
 }
 
 * {
@@ -37,13 +97,81 @@ body {
   margin: 0;
 }
 
+html, body {
+  max-width: 100vw;
+  overflow-x: hidden;
+  font-family: var(--font-family-sans);
+  background-color: var(--color-background);
+  color: var(--color-text-secondary);
+  -webkit-font-smoothing: antialiased;
+}
+
 a {
   color: inherit;
   text-decoration: none;
 }
 
-@media (prefers-color-scheme: dark) {
-  html {
-    color-scheme: dark;
-  }
+h1, h2, h3, h4, h5, h6 {
+  font-family: var(--font-family-sans);
+  color: var(--color-text-primary);
+  font-weight: 600;
+  letter-spacing: -0.02em;
+  margin-bottom: 0.5em;
+  line-height: var(--line-height-tight);
+}
+
+/* Base utility classes that can be used globally */
+.container {
+  width: 100%;
+  max-width: 1200px;
+  margin: 0 auto;
+  padding: 0 24px;
+}
+
+.card {
+  background-color: var(--color-surface);
+  border-radius: var(--radius-xl);
+  box-shadow: var(--shadow-md);
+  padding: 24px;
+  border: 1px solid var(--color-border-soft);
+  transition: transform 0.2s ease, box-shadow 0.2s ease;
+}
+
+/* Premium Button System */
+.btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  padding: 10px 20px;
+  border-radius: var(--radius-md);
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  border: none;
+  font-family: var(--font-family-sans);
+  font-size: var(--font-size-sm);
+  letter-spacing: 0.01em;
+}
+
+.btn-primary {
+  background-color: var(--color-primary-600);
+  color: var(--color-white);
+  box-shadow: var(--shadow-sm);
+}
+
+.btn-primary:hover {
+  background-color: var(--color-primary-700);
+  transform: translateY(-1px);
+  box-shadow: var(--shadow-md);
+}
+
+.btn-secondary {
+  background-color: var(--color-primary-50);
+  color: var(--color-primary-700);
+  font-weight: 600;
+}
+
+.btn-secondary:hover {
+  background-color: var(--color-primary-100);
+  color: var(--color-primary-800);
 }
