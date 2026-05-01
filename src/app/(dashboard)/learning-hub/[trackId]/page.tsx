@@ -3,6 +3,8 @@ import Link from 'next/link';
 import { db } from '@/lib/db';
 import { notFound } from 'next/navigation';
 
+export const dynamic = 'force-dynamic';
+
 export default async function TrackDetail({ params }: { params: Promise<{ trackId: string }> }) {
   const resolvedParams = await params;
   const trackId = resolvedParams.trackId;

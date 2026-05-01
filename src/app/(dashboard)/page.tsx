@@ -4,6 +4,8 @@ import TrackProgressCard from '@/components/dashboard/TrackProgressCard';
 import Link from 'next/link';
 import { db } from '@/lib/db';
 
+export const dynamic = 'force-dynamic';
+
 export default async function Home() {
   const tracksWithProgress = await db.learningTrack.findMany({
     where: {

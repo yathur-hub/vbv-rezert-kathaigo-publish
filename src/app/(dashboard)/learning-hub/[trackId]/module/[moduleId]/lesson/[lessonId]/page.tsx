@@ -4,6 +4,8 @@ import { notFound } from 'next/navigation';
 import Link from 'next/link';
 import InteractiveLesson from '@/components/learning/InteractiveLesson';
 
+export const dynamic = 'force-dynamic';
+
 export default async function LessonPage({ 
   params 
 }: { 
