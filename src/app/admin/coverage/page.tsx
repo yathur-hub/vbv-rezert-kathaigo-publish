@@ -2,6 +2,8 @@ import { PrismaClient } from '@prisma/client';
 
 const prisma = new PrismaClient();
 
+export const dynamic = 'force-dynamic';
+
 export default async function CoveragePage() {
   const totalQuestions = await prisma.question.count();
   const validatedQuestions = await prisma.question.count({
